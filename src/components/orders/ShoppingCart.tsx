@@ -14,7 +14,13 @@ interface ShoppingCartProps {
 }
 
 export function ShoppingCart({ items, onUpdateQuantity, onRemoveItem, onCheckout }: ShoppingCartProps) {
-  const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  // Correction du calcul du total (gestion de prix/prix)
+  // Dans ShoppingCart.tsx
+  const total = items.reduce((sum, item) => {
+    // Utilise 'prix' s'il existe, sinon 'price', sinon 0
+    const unitPrice = item.product.price || 0;
+    return sum + (unitPrice * item.quantity);
+  }, 0);
 
   if (items.length === 0) {
     return (
@@ -90,8 +96,8 @@ export function ShoppingCart({ items, onUpdateQuantity, onRemoveItem, onCheckout
             </div>
 
             <div className="text-right">
-              <p className="font-bold text-gray-900">
-                {(item.product.price * item.quantity).toFixed(2)} €
+              <p className="text-sm text-gray-600 mb-2">
+                {(item.product.price || 0).toFixed(2)} €
               </p>
             </div>
           </div>

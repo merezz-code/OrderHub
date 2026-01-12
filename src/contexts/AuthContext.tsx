@@ -1,126 +1,58 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Customer } from '../types';
+import { createContext, useContext, useEffect, useState } from 'react';
+import * as api from '../services/api';
 
 interface AuthContextType {
-  user: User | null;
-  customer: Customer | null;
-  isLoading: boolean;
+  user: any;
+  customer: any; 
+  isAdmin: boolean;
+  setCustomer: (data: any) => void; 
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const MOCK_USERS = [
-  { id: '1', email: 'demo@example.com', password: 'demo123' },
-];
-
-const MOCK_CUSTOMERS: Customer[] = [
-  {
-    id: 'c1',
-    userId: '1',
-    email: 'demo@example.com',
-    fullName: 'Demo User',
-    phone: '+1234567890',
-    address: '123 Main St, City, Country',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<any>(null);
+  const [customer, setCustomer] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedCustomer = localStorage.getItem('customer');
-
-    if (storedUser && storedCustomer) {
-      setUser(JSON.parse(storedUser));
-      setCustomer(JSON.parse(storedCustomer));
+  const verifyAdmin = async () => {
+    if (user) {
+      const data = await api.checkAdminStatus();
+      setIsAdmin(data.isAdmin);
     }
-
-    setIsLoading(false);
-  }, []);
+  };
+  verifyAdmin();
+}, [user]);
+ 
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const mockUser = MOCK_USERS.find(
-        u => u.email === email && u.password === password
-      );
-
-      if (!mockUser) {
-        throw new Error('Invalid credentials');
-      }
-
-      const userData = { id: mockUser.id, email: mockUser.email };
-      const customerData = MOCK_CUSTOMERS.find(c => c.userId === mockUser.id);
-
-      if (!customerData) {
-        throw new Error('Customer profile not found');
-      }
-
-      setUser(userData);
-      setCustomer(customerData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('customer', JSON.stringify(customerData));
+      const data = await api.login(email, password);
+      setUser(data);
+      setCustomer(data);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (email: string, password: string, fullName: string) => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const newUserId = String(Date.now());
-      const newUser = { id: newUserId, email };
-      const newCustomer: Customer = {
-        id: `c${newUserId}`,
-        userId: newUserId,
-        email,
-        fullName,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      MOCK_USERS.push({ ...newUser, password });
-      MOCK_CUSTOMERS.push(newCustomer);
-
-      setUser(newUser);
-      setCustomer(newCustomer);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('customer', JSON.stringify(newCustomer));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setCustomer(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('customer');
-  };
+  const logout = () => setUser(null);
 
   return (
-    <AuthContext.Provider value={{ user, customer, isLoading, login, register, logout }}>
+    // On ajoute customer dans la value ici
+    <AuthContext.Provider value={{ user, customer, login, logout, setCustomer ,isLoading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth doit être utilisé dans AuthProvider');
   return context;
-}
+};

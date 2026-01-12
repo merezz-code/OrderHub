@@ -27,9 +27,9 @@ export function OrderList({ orders }: OrderListProps) {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Mes Commandes</h2>
-
       {orders.map(order => {
-        const status = statusConfig[order.status];
+        // Sécurité pour le statut
+        const status = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.confirmed;
         const StatusIcon = status.icon;
 
         return (
@@ -48,49 +48,29 @@ export function OrderList({ orders }: OrderListProps) {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="w-4 h-4" />
-                    {new Date(order.createdAt).toLocaleDateString('fr-FR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
+                    {new Date(order.createdAt).toLocaleDateString('fr-FR')}
                   </div>
                 </div>
-
                 <div className="text-right">
                   <div className="flex items-center justify-end gap-2 text-2xl font-bold text-gray-900">
-                    <DollarSign className="w-6 h-6" />
                     {order.totalAmount.toFixed(2)} €
                   </div>
-                  <p className="text-sm text-gray-600">{order.items.length} article(s)</p>
+                  <p className="text-sm text-gray-600">{order.items?.length || 0} article(s)</p>
                 </div>
               </div>
             </div>
 
             <div className="p-6">
               <div className="space-y-3">
-                {order.items.map(item => (
+                {order.items?.map(item => (
                   <div key={item.id} className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                      {item.product?.imageUrl ? (
-                        <img
-                          src={item.product.imageUrl}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-6 h-6 text-gray-400" />
-                        </div>
-                      )}
+                    <div className="w-12 h-12 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center">
+                      <Package className="w-6 h-6 text-gray-400" />
                     </div>
-
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{item.product?.name}</h4>
-                      <p className="text-sm text-gray-600">
-                        Quantité: {item.quantity} × {item.unitPrice.toFixed(2)} €
-                      </p>
+                      <h4 className="font-medium text-gray-800">Produit #{item.productId}</h4>
+                      <p className="text-sm text-gray-600">Qté: {item.quantity}</p>
                     </div>
-
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">{item.subtotal.toFixed(2)} €</p>
                     </div>
