@@ -85,18 +85,21 @@ export async function fetchOrders() {
 }
 
 
+// services/api.ts
 export const createOrder = async (orderData: any) => {
-  const token = localStorage.getItem('token'); // Récupération du jeton Keycloak
+  // Récupérer le token stocké (souvent dans localStorage après login)
+  const token = localStorage.getItem('token'); 
+
   const response = await fetch(`${API_BASE}/orders`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // Très important pour le JwtAuthenticationToken côté Java
+      'Authorization': `Bearer ${token}` // TRÈS IMPORTANT
     },
-    body: JSON.stringify(orderData),
+    body: JSON.stringify(orderData)
   });
-
-  if (!response.ok) throw new Error('Erreur lors de la création de la commande');
+  
+  if (!response.ok) throw new Error('Erreur API');
   return response.json();
 };
 
@@ -156,4 +159,35 @@ export const getAllClients = async () => {
   }
 
   return response.json();
+};
+
+// Récupérer le token (ajuste la clé selon ton projet, souvent 'token')
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token'); 
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+};
+
+export const updateProduct = async (id: number | string, data: any) => {
+  const response = await fetch(`${API_BASE}/products/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(), // Ajout des headers sécurisés
+    body: JSON.stringify(data),
+  });
+  if (response.status === 401) throw new Error('Session expirée ou non autorisée');
+  if (!response.ok) throw new Error('Erreur lors de la modification');
+  return response.json();
+};
+
+export const deleteProduct = async (id: number | string) => {
+  const response = await fetch(`${API_BASE}/products/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+  if (response.status === 401) throw new Error('Action non autorisée');
+  if (!response.ok) throw new Error('Erreur lors de la suppression');
 };

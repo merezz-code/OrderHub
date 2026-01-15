@@ -15,6 +15,7 @@ type View = 'products' | 'cart' | 'orders' | 'profile' | 'dashboard';
 
 function AppContent() {
   const { user, logout, setCustomer, isAdmin } = useAuth();
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<View>('products');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
@@ -70,9 +71,9 @@ function AppContent() {
 
       setCartItems([]);
       handleViewOrders();
-      alert("Commande réussie et stock mis à jour !");
+      setStatusMessage("Commande réussie et stock mis à jour !");
     } catch (error) {
-      alert("Erreur : Stock insuffisant ou service indisponible");
+      setStatusMessage("Erreur : Stock insuffisant ou service indisponible");
     }
   };
   // À mettre dans ton composant AppContent
@@ -100,7 +101,7 @@ function AppContent() {
       setOrders(formattedOrders);
       setCurrentView('orders');
     } catch (error: any) {
-      alert("Erreur de chargement des commandes");
+      setStatusMessage("Erreur de chargement des commandes");
     }
   };
 
@@ -208,6 +209,13 @@ function AppContent() {
           </div>
         </div>
       </nav>
+      {/* Zone de message simple */}
+      {statusMessage && (
+        <div className="bg-blue-600 text-white text-center py-2 font-medium shadow-md">
+          {statusMessage}
+          <button onClick={() => setStatusMessage(null)} className="ml-4 font-bold">✕</button>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {currentView === 'products' && (
@@ -224,7 +232,10 @@ function AppContent() {
         )}
 
         {currentView === 'orders' && <OrderList orders={orders} />}
-        {currentView === 'dashboard' && <AdminDashboard />}
+        {/* Dans AppContent.tsx */}
+        {currentView === 'dashboard' && (
+          <AdminDashboard setStatusMessage={setStatusMessage} />
+        )}
         {currentView === 'profile' && <CustomerProfile />}
 
       </main>
